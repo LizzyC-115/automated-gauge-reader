@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Editor/OS
+.vscode/
+.DS_Store
+
+# Datasets & training artifacts -- large collections of images/labels,
+# not meant to live in git. Keep these on disk locally (or in a separate
+# storage system / DVC / Git LFS setup if you want them versioned).
+datasets/
+extracted_frames/
+new-frames/
+processed_images/
+gauge-readings/
+gauge-readings-processed/
+processed_gauge_readings.yolo26/
+inference_output/
+runs/
+runs-old/
+
+# Source videos and trained model weights -- large binaries
+*.mov
+*.mp4
+*.pt
+
+# Large sample/reference images
+gauge_image.png
