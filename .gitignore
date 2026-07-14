@@ -29,3 +29,7 @@ runs-old/
 
 # Large sample/reference images
 gauge_image.png
+
+# app.py (the GUI) scratch space -- uploaded videos/photos and training/
+# streaming subprocess logs, all regenerated per machine.
+gui_runtime/

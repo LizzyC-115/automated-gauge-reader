@@ -22,13 +22,79 @@ from read_measurement import extract_keypoints, iter_image_paths, probe_frame_si
 from nominal.core import NominalClient
 from nominal.experimental.video import VideoStream, Src
 
+import argparse
 import cv2
 import os
 from datetime import datetime
 
-TEST_IMAGES_DIR = "/Users/lchanpaibool/Desktop/Hack Week Project/gauge-readings-processed/images/Val"
-INFERENCE_OUTPUT_DIR = "/Users/lchanpaibool/Desktop/Hack Week Project/inference_output"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+TEST_IMAGES_DIR = os.path.join(BASE_DIR, "gauge-readings-processed", "images", "Val")
+INFERENCE_OUTPUT_DIR = os.path.join(BASE_DIR, "inference_output")
 DEFAULT_STREAM_SOURCE = "/Users/lchanpaibool/.cache/kagglehub/datasets/juliusgrassme/pressure-gauge-reader-data/versions/1/Data/2 Test videos/edited videos/man2cropclipscale.mp4"
+
+# Quick-switch videos, selectable from the command line with --1/--3/--4
+# (e.g. `python3 stream_to_core.py --3`) instead of editing
+# DEFAULT_STREAM_SOURCE by hand every time you want to try a different clip.
+# These (and DEFAULT_STREAM_SOURCE above) are convenience shortcuts to this
+# project's own demo videos -- to point at YOUR OWN video/webcam/min-max
+# instead, use --source/--min/--max (see parse_args() below), which is what
+# the GUI's "Run & Stream" tab does under the hood.
+MAN_VIDEOS_DIR = "/Users/lchanpaibool/.cache/kagglehub/datasets/juliusgrassme/pressure-gauge-reader-data/versions/1/Data/2 Test videos/edited videos"
+DEFAULT_MIN_VALUE = 0.0
+DEFAULT_MAX_VALUE = 2.5
+
+# Each entry is (video path, min_value, max_value) -- every physical gauge
+# in these clips has its own scale, so the reading range has to travel with
+# the video instead of being one hardcoded pair for all of them.
+VIDEO_CHOICES = {
+    "1": (os.path.join(MAN_VIDEOS_DIR, "man1cropclipscale.mp4"), 0.0, 6.0),
+    "3": (os.path.join(MAN_VIDEOS_DIR, "man3cropclipscale.mp4"), 0.0, 2.5),
+    "4": (
+        "/Users/lchanpaibool/.cache/kagglehub/datasets/juliusgrassme/pressure-gauge-reader-data/versions/1/Data/3 Misc handheld videos/handheld4.mp4",
+        -1.0,
+        3.0,
+    ),
+}
+
+
+def parse_args():
+    """Parse either one of --1/--3/--4 (this project's own demo clips), or a
+    generic --source/--min/--max for streaming YOUR OWN video file, image
+    directory, or webcam. At most one of --1/--3/--4 may be given; --source
+    is independent of that group and takes priority if both are somehow
+    passed. With nothing given at all, resolve_stream_config() falls back to
+    DEFAULT_STREAM_SOURCE/DEFAULT_MIN_VALUE/DEFAULT_MAX_VALUE.
+    """
+    parser = argparse.ArgumentParser(description="Train (if needed), read gauge measurements from a video, and stream to Nominal Core.")
+    group = parser.add_mutually_exclusive_group()
+    for key, (path, _min_value, _max_value) in VIDEO_CHOICES.items():
+        group.add_argument(f"--{key}", action="store_true", help=f"Stream {os.path.basename(path)}")
+    parser.add_argument("--source", default=None,
+                         help="Video file, image directory, or webcam index (e.g. 0) to stream from.")
+    parser.add_argument("--min", dest="min_value", type=float, default=None, help="Gauge value at scale_min.")
+    parser.add_argument("--max", dest="max_value", type=float, default=None, help="Gauge value at scale_max.")
+    return parser.parse_args()
+
+
+def resolve_stream_config(args):
+    """Return (source, min_value, max_value): --source (with --min/--max)
+    wins if given; otherwise whichever VIDEO_CHOICES entry matches --1/--3/
+    --4; otherwise the DEFAULT_* values.
+
+    A --source that's purely digits (e.g. "0") is treated as a webcam device
+    index rather than a file path -- cv2.VideoCapture accepts either an int
+    index or a string path, but argparse always hands us a string.
+    """
+    if args.source is not None:
+        source = int(args.source) if args.source.isdigit() else args.source
+        min_value = args.min_value if args.min_value is not None else DEFAULT_MIN_VALUE
+        max_value = args.max_value if args.max_value is not None else DEFAULT_MAX_VALUE
+        return source, min_value, max_value
+
+    for key, (path, min_value, max_value) in VIDEO_CHOICES.items():
+        if getattr(args, key):
+            return path, min_value, max_value
+    return DEFAULT_STREAM_SOURCE, DEFAULT_MIN_VALUE, DEFAULT_MAX_VALUE
 
 NOMINAL_PROFILE = "default"
 NOMINAL_ASSET_RID = "ri.scout.cerulean-staging.asset.1abf9d05-57f4-47a3-b4f9-0945594d3ede"
@@ -259,8 +325,12 @@ def stream_gauge_video(model, source, min_value=0.0, max_value=4.0, frame_skip=1
 
 
 def main():
+    args = parse_args()
+    source, min_value, max_value = resolve_stream_config(args)
+    print(f"Streaming source: {source} (range {min_value}-{max_value})")
+
     model = load_or_train_model()
-    stream_gauge_video(model, source=DEFAULT_STREAM_SOURCE, min_value=0.0, max_value=2.5, frame_skip=1)
+    stream_gauge_video(model, source=source, min_value=min_value, max_value=max_value, frame_skip=1)
 
 
 if __name__ == "__main__":

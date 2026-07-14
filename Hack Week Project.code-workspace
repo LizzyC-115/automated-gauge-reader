@@ -1,0 +1,11 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../../.cache/kagglehub/datasets/juliusgrassme/pressure-gauge-reader-data/versions/1"
+		}
+	],
+	"settings": {}
+}

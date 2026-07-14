@@ -24,8 +24,10 @@ decision came about.
 
 | File | Purpose |
 |---|---|
-| `stream_to_core.py` | **Entry point.** Trains a model if none exists, then reads gauge measurements from a video/webcam feed and streams the video + reading to Nominal Core. Run with `python3 stream_to_core.py`. |
+| `app.py` | **Interactive GUI.** Label your own gauge photos/videos, train the model, and run the live reader, all from a browser tab. Run with `streamlit run app.py`. See [GUI](#gui) below. |
+| `stream_to_core.py` | **CLI entry point.** Trains a model if none exists, then reads gauge measurements from a video/webcam feed and streams the video + reading to Nominal Core. Run with `python3 stream_to_core.py`. |
 | `train_model.py` | Trains/fine-tunes the YOLO pose model. Runs standalone: `python3 train_model.py`. |
+| `dataset_tools.py` | Turns a video/photo into a labeled training sample (frame extraction, keypoint-click -> YOLO-pose label, data.yaml/Train-Val bookkeeping). Used by `app.py`. |
 | `process_image.py` | Per-frame preprocessing: grayscale, contrast enhancement, gauge-circle detection (Hough Circle Transform), scale-marking trace (Canny + dilation). |
 | `get_measurement.py` | Pure geometry: converts 4 detected keypoints into a numeric reading. |
 | `read_measurement.py` | Shared helpers (keypoint extraction, image/video path handling) used by both training data prep and the streaming pipeline. |
@@ -37,7 +39,7 @@ decision came about.
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-pip install ultralytics opencv-python "nominal[video]"
+pip install -r requirements.txt
 ```
 
 Nominal streaming also requires GStreamer and a configured profile:
@@ -47,11 +49,46 @@ brew install gstreamer gst-plugins-base gst-plugins-good gst-plugins-bad gst-plu
 nom config profile add default -t <your-api-token> -u <your-api-url>
 ```
 
-## Running
+## GUI
+
+```bash
+streamlit run app.py
+```
+
+Opens a browser tab with three tabs:
+
+1. **Label Data** -- upload a gauge video or photos, click the 4 keypoints
+   (`pivot`, `scale_min`, `scale_max`, `needle_tip`) on each frame, and
+   they're saved straight into `gauge-readings-processed/` alongside the
+   existing training set.
+2. **Train Model** -- fine-tune from the latest checkpoint, or train from
+   scratch, with epochs/patience/image-size controls and a live training
+   log.
+3. **Run & Stream** -- pick a video upload, webcam, or a path on disk, set
+   the gauge's min/max scale values, and start reading + streaming to
+   Nominal Core, with a live log and a Stop button.
+
+Training and streaming run as background subprocesses of `train_model.py`
+and `stream_to_core.py` (see below) -- the live annotated preview window
+they open still appears outside the browser, same as running those scripts
+from the terminal directly.
+
+## Running from the command line
 
 ```bash
 python3 stream_to_core.py       # train (if needed) + read + stream to Nominal
 python3 train_model.py          # train/fine-tune only
+```
+
+Both accept flags instead of editing constants in the file:
+
+```bash
+# Read your own video/webcam instead of this project's demo clips
+python3 stream_to_core.py --source path/to/your_video.mp4 --min 0 --max 6
+python3 stream_to_core.py --source 0 --min 0 --max 6   # webcam device 0
+
+# Control epochs/patience/image size, or force scratch vs. fine-tune
+python3 train_model.py --mode scratch --epochs 100 --patience 20 --imgsz 416
 ```
 
 ## Data

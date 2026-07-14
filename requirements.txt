@@ -1,0 +1,12 @@
+# pip install -r requirements.txt
+#
+# Nominal streaming also needs GStreamer + a configured profile -- see the
+# Setup section of README.md.
+ultralytics>=8.4
+opencv-python>=5.0
+PyYAML>=6.0
+nominal[video]>=1.150
+
+# GUI (app.py): streamlit run app.py
+streamlit>=1.59
+streamlit-image-coordinates>=0.4
