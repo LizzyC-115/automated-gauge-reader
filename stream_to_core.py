@@ -30,7 +30,7 @@ from datetime import datetime
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEST_IMAGES_DIR = os.path.join(BASE_DIR, "gauge-readings-processed", "images", "Val")
 INFERENCE_OUTPUT_DIR = os.path.join(BASE_DIR, "inference_output")
-DEFAULT_STREAM_SOURCE = "/Users/lchanpaibool/.cache/kagglehub/datasets/juliusgrassme/pressure-gauge-reader-data/versions/1/Data/2 Test videos/edited videos/man2cropclipscale.mp4"
+DEFAULT_STREAM_SOURCE = "ENTER VIDEO PATH"
 
 # Quick-switch videos, selectable from the command line with --1/--3/--4
 # (e.g. `python3 stream_to_core.py --3`) instead of editing
@@ -39,7 +39,7 @@ DEFAULT_STREAM_SOURCE = "/Users/lchanpaibool/.cache/kagglehub/datasets/juliusgra
 # project's own demo videos -- to point at YOUR OWN video/webcam/min-max
 # instead, use --source/--min/--max (see parse_args() below), which is what
 # the GUI's "Run & Stream" tab does under the hood.
-MAN_VIDEOS_DIR = "/Users/lchanpaibool/.cache/kagglehub/datasets/juliusgrassme/pressure-gauge-reader-data/versions/1/Data/2 Test videos/edited videos"
+MAN_VIDEOS_DIR = "ENTER VIDEO PATH"
 DEFAULT_MIN_VALUE = 0.0
 DEFAULT_MAX_VALUE = 2.5
 
@@ -50,7 +50,7 @@ VIDEO_CHOICES = {
     "1": (os.path.join(MAN_VIDEOS_DIR, "man1cropclipscale.mp4"), 0.0, 6.0),
     "3": (os.path.join(MAN_VIDEOS_DIR, "man3cropclipscale.mp4"), 0.0, 2.5),
     "4": (
-        "/Users/lchanpaibool/.cache/kagglehub/datasets/juliusgrassme/pressure-gauge-reader-data/versions/1/Data/3 Misc handheld videos/handheld4.mp4",
+        "ENTER VIDEO PATH",
         -1.0,
         3.0,
     ),
@@ -97,8 +97,8 @@ def resolve_stream_config(args):
     return DEFAULT_STREAM_SOURCE, DEFAULT_MIN_VALUE, DEFAULT_MAX_VALUE
 
 NOMINAL_PROFILE = "default"
-NOMINAL_ASSET_RID = "ri.scout.cerulean-staging.asset.1abf9d05-57f4-47a3-b4f9-0945594d3ede"
-NOMINAL_DATASET_RID = "ri.catalog.cerulean-staging.dataset.dcdc95db-858f-4c38-a66c-542defcfff41"
+NOMINAL_ASSET_RID = "ENTER ASSET ID"
+NOMINAL_DATASET_RID = "ENTER DATASET ID"
 NOMINAL_CHANNEL_NAME = "gauge_reading_bar"
 NOMINAL_VIDEO_NAME = "Gauge Reading Live Video"
 
